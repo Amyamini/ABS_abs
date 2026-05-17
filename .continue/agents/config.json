@@ -1,0 +1,15 @@
+{
+  "models": [
+    {
+      "title": "DeepSeek本地代码助手",
+      "model": "deepseek-coder:1.3b",
+      "provider": "ollama",
+      "apiBase": "http://localhost:11434"
+    }
+  ],
+  "tabAutocompleteModel": {
+    "model": "deepseek-coder:1.3b",
+    "provider": "ollama",
+    "apiBase": "http://localhost:11434"
+  }
+}
