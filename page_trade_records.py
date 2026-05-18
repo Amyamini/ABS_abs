@@ -32,7 +32,7 @@ def render_trade_records(trades_filtered):
         date_range = st.date_input("交易时间", value=[min_date, max_date])
 
     with filter_col2:
-        securities_local = st.text_input("证券名称", placeholder="额外模糊搜索...")
+        securities_local = st.text_input("证券名称", placeholder="模糊搜索...")
 
     with filter_col3:
         sellers = st.text_input("卖出方", placeholder="模糊搜索...")
@@ -72,7 +72,7 @@ def render_trade_records(trades_filtered):
     # 确保字段存在
     show_cols = [
         "证券名称", "日期", "交易份额（万份）", "卖出主体", "买入主体",
-        "交易净价", "交易全价", "交易金额（万元）"
+        "交易净价", "交易全价", "交易金额（元）"
     ]
 
     # 只显示存在的列
@@ -82,10 +82,20 @@ def render_trade_records(trades_filtered):
     # ✅ 汇总求和（交易份额 + 交易金额）
     # ---------------------
     total_share = trades_show["交易份额（万份）"].sum()
-    total_amount = trades_show["交易金额（万元）"].sum()
+    total_amount = trades_show["交易金额（元）"].sum()
+
+    # 格式化表格数据
+    formatter = {
+        "交易份额（万份）": "{:.0f}",
+        "交易净价": "{:.4f}",
+        "交易全价": "{:.4f}",
+        "交易金额（元）": "{:,.2f}"
+    }
+    # 只格式化存在的列
+    exist_formatter = {k: v for k, v in formatter.items() if k in exist_cols}
 
     st.dataframe(
-        trades_show[exist_cols].style.format(precision=2),
+        trades_show[exist_cols].style.format(exist_formatter),
         width="stretch",
         height=450,
         hide_index=True
@@ -96,7 +106,7 @@ def render_trade_records(trades_filtered):
     # ---------------------
     st.markdown(f"""
     <div style="margin-top:10px; font-size:15px; font-weight:bold; color:#1e40af;">
-        合计： 交易份额 = {total_share:,.2f} 万份   |   交易金额 = {total_amount:,.2f} 万元
+        合计： 交易份额 = {total_share:,.2f} 万份   |   交易金额 = {total_amount:,.2f} 元
     </div>
     """, unsafe_allow_html=True)
 

@@ -133,61 +133,20 @@ with st.sidebar:
     )
     
     st.markdown("---")
-    
-    # 全局证券名称筛选
-    st.subheader("全局筛选")
-    if "证券名称" in df_merged.columns:
-        securities_list = sorted(df_merged["证券名称"].dropna().unique().tolist())
-        selected_security = st.selectbox(
-            "证券名称",
-            options=["全部"] + securities_list,
-            index=0
-        )
-        # 显示当前筛选状态
-        if selected_security != "全部":
-            st.success(f"✅ 已筛选: {selected_security}")
-        else:
-            st.info("ℹ️ 显示全部证券")
-    else:
-        selected_security = "全部"
 
 # ----------------------
 # 数据过滤
 # ----------------------
-# 核心投资指标：不使用全局筛选，显示全部数据
-df_core = df_merged.copy()
-trades_core = trades.copy()
-
-# 其他三个页面：应用全局证券名称筛选
+# 所有页面使用相同的数据
 df_filtered = df_merged.copy()
 trades_filtered = trades.copy()
 df_projects_filtered = df_projects.copy()
 
-if selected_security != "全部":
-    # 产品分析：筛选主数据
-    df_filtered = df_filtered[df_filtered["证券名称"] == selected_security].copy()
-    
-    # 交易记录：筛选交易数据
-    if "证券名称" in trades_filtered.columns:
-        trades_filtered = trades_filtered[trades_filtered["证券名称"] == selected_security].copy()
-    else:
-        # 如果交易记录没有证券名称列，尝试使用其他可能的列名
-        possible_cols = ["证券简称", "债券名称", "产品名称"]
-        for col in possible_cols:
-            if col in trades_filtered.columns:
-                trades_filtered = trades_filtered[trades_filtered[col] == selected_security].copy()
-                break
-    
-    # 资产分析：筛选项目库数据
-    if "证券名称" in df_projects_filtered.columns:
-        df_projects_filtered = df_projects_filtered[df_projects_filtered["证券名称"] == selected_security].copy()
-
 # ----------------------
 # 核心统计计算
 # ----------------------
-# 核心投资指标：使用全部数据（不受全局筛选影响）
-stats = calculate_statistics(df_core)
-trade_records = calculate_trade_records(trades_core)
+stats = calculate_statistics(df_filtered)
+trade_records = calculate_trade_records(trades_filtered)
 
 # ----------------------
 # 主页面标题
@@ -205,7 +164,7 @@ st.markdown("<hr style='margin: 5px 0; border: none; border-top: 1px solid #eee;
 # 核心投资指标页面
 # ----------------------
 if menu == "核心投资指标":
-    render_core_metrics(stats, df_core, trades_core)
+    render_core_metrics(stats, df_filtered, trades_filtered)
 
 # ----------------------
 # 产品分析页面

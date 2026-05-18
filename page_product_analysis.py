@@ -110,14 +110,12 @@ def render_product_analysis(df_filtered):
                 df_latest = df_latest.merge(xirr_result, on=["产品名称", "证券名称"], how="left")
             except:
                 df_latest["XIRR"] = None
-                
-            # 按产品名称+证券名称分组聚合
-            df_latest = df_latest.groupby(["产品名称", "证券名称"], as_index=False).agg({
-                "持仓份额": "sum",
-                "投资本金余额": "sum",
-                "收益金额": "sum",
-                "XIRR": "first"
-            })
+
+            # ======================================================================
+            # 去重：同一个【产品+证券】可能有多条记录，取第一条即可
+            # （因为第67-83行已经计算了每个【产品+证券】的汇总值）
+            # ======================================================================
+            df_latest = df_latest.drop_duplicates(subset=["产品名称", "证券名称"], keep="first")
 
             # ======================================================================
             # 最终表格
@@ -155,7 +153,7 @@ def render_product_analysis(df_filtered):
             # ---------------------
             st.markdown(f"""
             <div style="margin-top:10px; font-size:15px; font-weight:bold; color:#1e40af;">
-                合计： 持仓份额 = {total_share_final_table:,.2f} 万份   |   投资本金余额 = {total_amount_final_table:,.2f} 万元   |   收益金额 = {total_profit_final_table:,.2f} 万元
+                合计： 持仓份额 = {total_share_final_table:,.2f} 万份   |   投资本金余额 = {total_amount_final_table:,.2f} 元   |   收益金额 = {total_profit_final_table:,.2f} 元
             </div>
             """, unsafe_allow_html=True)
 
