@@ -5,44 +5,190 @@ from openpyxl import load_workbook
 from openpyxl.utils.dataframe import dataframe_to_rows
 from datetime import datetime, date
 import io
+import os
 
-st.set_page_config(layout="wide", page_title="产品流动性管理系统（母子基金联动）")
-st.title("🏦 产品流动性管理系统（母子基金联动）")
+st.set_page_config(
+    layout="wide", 
+    page_title="产品流动性管理系统",
+    initial_sidebar_state="collapsed"
+)
+
+# ----------------------
+# 产品参数加载函数
+# ----------------------
+def load_product_elements():
+    """加载产品要素表"""
+    file_path = "产品要素表.xlsx"
+    
+    if os.path.exists(file_path):
+        try:
+            df = pd.read_excel(file_path)
+            # 确保所有列都是正确的数据类型
+            if "备注" in df.columns:
+                df["备注"] = df["备注"].fillna("").astype(str)
+            if "申赎渠道" in df.columns:
+                df["申赎渠道"] = df["申赎渠道"].fillna("").astype(str)
+            if "产品名称" in df.columns:
+                df["产品名称"] = df["产品名称"].fillna("").astype(str)
+            
+            # 处理简称列（可能有多种命名方式）
+            alias_col = None
+            for col_name in ["简称", "产品简称", "缩写", "产品缩写"]:
+                if col_name in df.columns:
+                    alias_col = col_name
+                    break
+            
+            if alias_col:
+                df[alias_col] = df[alias_col].fillna("").astype(str)
+            
+            # 确保数值列是数值类型
+            for col in ["申购到账时间(T+N)", "赎回到账时间(T+N)"]:
+                if col in df.columns:
+                    df[col] = pd.to_numeric(df[col], errors='coerce').fillna(0).astype(int)
+            return df
+        except Exception as e:
+            st.error(f"加载产品要素表失败：{e}")
+            return pd.DataFrame()
+    else:
+        # 如果文件不存在，创建空的DataFrame
+        return pd.DataFrame(columns=[
+            "产品名称", "申赎渠道", "申购到账时间(T+N)", 
+            "赎回到账时间(T+N)", "备注"
+        ])
+
+
+def create_product_name_mapping(df_elements):
+    """创建产品名称映射：简称 -> 全称"""
+    if df_elements.empty or "产品名称" not in df_elements.columns:
+        return {}
+    
+    mapping = {}
+    
+    # 查找简称列
+    alias_col = None
+    for col_name in ["简称", "产品简称", "缩写", "产品缩写"]:
+        if col_name in df_elements.columns:
+            alias_col = col_name
+            break
+    
+    if alias_col:
+        # 创建简称到全称的映射
+        for _, row in df_elements.iterrows():
+            full_name = row["产品名称"]
+            alias = row[alias_col]
+            if alias and str(alias).strip():
+                mapping[str(alias).strip()] = full_name
+            # 也添加全称到自身的映射
+            mapping[full_name] = full_name
+    else:
+        # 如果没有简称列，只使用产品名称
+        for _, row in df_elements.iterrows():
+            full_name = row["产品名称"]
+            mapping[full_name] = full_name
+    
+    return mapping
+
+
+def save_product_elements(df):
+    """保存产品要素表"""
+    try:
+        df.to_excel("产品要素表.xlsx", index=False)
+        return True
+    except Exception as e:
+        st.error(f"保存失败：{e}")
+        return False
+
+
+# ----------------------
+# 主界面：流动性管理表
+# ----------------------
+
+# 自定义CSS优化页面布局
+st.markdown("""
+<style>
+    /* 减小标题和文本的间距 */
+    .block-container {
+        padding-top: 1rem;
+        padding-bottom: 0.5rem;
+    }
+    
+    /* 减小表格行高 */
+    .stDataFrame [data-testid="stVerticalBlock"] {
+        gap: 0.2rem;
+    }
+    
+    /* 优化按钮样式 */
+    .stButton > button {
+        padding: 0.25rem 0.5rem;
+        font-size: 0.85rem;
+    }
+    
+    /* 减小选择框高度 */
+    .stSelectbox > div > div {
+        min-height: 2.5rem;
+    }
+    
+    /* 优化表格字体大小 */
+    div[data-testid="stDataframe"] {
+        font-size: 0.85rem;
+    }
+</style>
+""", unsafe_allow_html=True)
+
+st.title("🏦 产品流动性管理系统")
 
 # ---------- 1. 加载数据 ----------
-uploaded_file = st.file_uploader("上传 Excel 文件（基金流动性管理总表.xlsx）", type=["xlsx"])
 DEFAULT_FILE = "基金流动性管理总表.xlsx"
+file_path = DEFAULT_FILE
 
-if uploaded_file is not None:
-    file_path = uploaded_file
-    file_name = uploaded_file.name
-else:
-    file_path = DEFAULT_FILE
-    file_name = DEFAULT_FILE
-    st.info(f"使用默认文件：{file_name}")
+# 检查文件是否存在
+if not os.path.exists(file_path):
+    st.error(f"❌ 找不到文件：{file_path}")
+    st.stop()
 
 
-@st.cache_data(ttl=60)
+@st.cache_data(ttl=300)  # 缓存5分钟，减少重新加载
 def load_all_sheets(file_path):
+    """优化版：使用 xls 对象直接读取，避免重复打开文件"""
+    # 一次性创建 ExcelFile 对象
     xls = pd.ExcelFile(file_path, engine="openpyxl")
     sheets_data = {}
-    for sheet in xls.sheet_names:
-        df = pd.read_excel(file_path, sheet_name=sheet, engine="openpyxl")
-        # 取前5列，标准化列名
-        if df.shape[1] >= 5:
+    
+    # 只读取从第3张sheet开始（索引2）的所有sheet
+    target_sheets = xls.sheet_names[2:]  # 从索引2开始，即第3张sheet
+    
+    for sheet_name in target_sheets:
+        # 使用 xls.parse() 而不是 pd.read_excel()，避免重复读取文件
+        df = xls.parse(sheet_name)
+        
+        # 取前6列，标准化列名（新增“关联产品”列）
+        if df.shape[1] >= 6:
+            flow_df = df.iloc[:, :6].copy()
+            flow_df.columns = ["日期", "现金流类型", "关联产品", "现金流入", "现金流出", "期末余额"]
+        elif df.shape[1] >= 5:
             flow_df = df.iloc[:, :5].copy()
             flow_df.columns = ["日期", "现金流类型", "现金流入", "现金流出", "期末余额"]
+            # 插入空的“关联产品”列
+            flow_df.insert(2, "关联产品", "")
         else:
             flow_df = df.copy()
-            for i in range(5 - df.shape[1]):
+            # 补充缺失的列
+            for i in range(6 - df.shape[1]):
                 flow_df[f"col_{i + df.shape[1] + 1}"] = ""
-            flow_df.columns = ["日期", "现金流类型", "现金流入", "现金流出", "期末余额"] + list(flow_df.columns[5:])
-            flow_df = flow_df.iloc[:, :5]
-        # 数值转换
+            flow_df.columns = ["日期", "现金流类型", "关联产品", "现金流入", "现金流出", "期末余额"] + list(flow_df.columns[6:])
+            flow_df = flow_df.iloc[:, :6]
+        
+        # 数值转换 - 使用向量化操作提高性能
         for col in ["现金流入", "现金流出", "期末余额"]:
             flow_df[col] = pd.to_numeric(flow_df[col], errors="coerce")
-        flow_df["日期"] = pd.to_datetime(flow_df["日期"], errors="coerce")
-        sheets_data[sheet] = flow_df
+        # 日期转换 - 指定常见日期格式以避免警告
+        flow_df["日期"] = pd.to_datetime(flow_df["日期"], errors="coerce", format="mixed", dayfirst=False)
+        
+        # 确保“关联产品”列是字符串类型
+        flow_df["关联产品"] = flow_df["关联产品"].fillna("").astype(str)
+        
+        sheets_data[sheet_name] = flow_df
+    
     return sheets_data
 
 
@@ -53,62 +199,92 @@ except Exception as e:
     st.error(f"读取文件失败：{e}")
     st.stop()
 
+# 加载产品要素表并创建名称映射
+df_elements = load_product_elements()
+name_mapping = create_product_name_mapping(df_elements)
+
+# 创建反向映射：全称 -> 简称（用于显示）
+reverse_mapping = {}
+if df_elements is not None and not df_elements.empty:
+    alias_col = None
+    for col_name in ["简称", "产品简称", "缩写", "产品缩写"]:
+        if col_name in df_elements.columns:
+            alias_col = col_name
+            break
+    
+    if alias_col:
+        for _, row in df_elements.iterrows():
+            full_name = row["产品名称"]
+            alias = row[alias_col]
+            if alias and str(alias).strip():
+                reverse_mapping[full_name] = str(alias).strip()
+
 # ---------- 2. 产品类型配置（存储在 session_state） ----------
 if "product_types" not in st.session_state:
-    # 初始默认识别：根据工作表名称包含“母基金”等关键词，没有则默认子基金
+    # 初始默认识别：优先从产品要素表读取，其次根据工作表名称关键词
     st.session_state.product_types = {}
+    
+    # 查找类型列（可能有多种命名方式）
+    type_col = None
+    if not df_elements.empty:
+        for col_name in ["产品类型", "类型", "基金类型"]:
+            if col_name in df_elements.columns:
+                type_col = col_name
+                break
+    
     for p in all_products:
-        if "母基金" in p or "FOF" in p:
-            st.session_state.product_types[p] = "母基金"
+        # 1. 优先从产品要素表读取类型
+        if type_col and not df_elements.empty:
+            # 尝试通过名称匹配
+            if p in df_elements["产品名称"].values:
+                product_type = df_elements[df_elements["产品名称"] == p].iloc[0][type_col]
+                st.session_state.product_types[p] = str(product_type) if pd.notna(product_type) else "子基金"
+            # 尝试通过简称匹配
+            else:
+                alias_col = None
+                for col_name in ["简称", "产品简称", "缩写", "产品缩写"]:
+                    if col_name in df_elements.columns:
+                        alias_col = col_name
+                        break
+                
+                if alias_col and p in df_elements[alias_col].values:
+                    product_type = df_elements[df_elements[alias_col] == p].iloc[0][type_col]
+                    st.session_state.product_types[p] = str(product_type) if pd.notna(product_type) else "子基金"
+                else:
+                    # 2. 如果产品要素表没有，根据关键词判断
+                    if "母基金" in p or "FOF" in p or "FOF" in p.upper():
+                        st.session_state.product_types[p] = "母基金"
+                    else:
+                        st.session_state.product_types[p] = "子基金"
         else:
-            st.session_state.product_types[p] = "子基金"
+            # 3. 如果没有产品要素表，根据关键词判断
+            if "母基金" in p or "FOF" in p or "FOF" in p.upper():
+                st.session_state.product_types[p] = "母基金"
+            else:
+                st.session_state.product_types[p] = "子基金"
 
-if "holdings" not in st.session_state:
-    # 持仓结构：母基金 -> {子基金名称: 持有份额（金额，净值暂定为1）}
-    st.session_state.holdings = {}
-
-# 侧边栏配置产品类型
-st.sidebar.header("产品类型配置")
-for prod in all_products:
-    current_type = st.session_state.product_types.get(prod, "子基金")
-    new_type = st.sidebar.selectbox(
-        f"{prod} 类型",
-        ["母基金", "子基金"],
-        index=0 if current_type == "母基金" else 1,
-        key=f"type_{prod}"
-    )
-    st.session_state.product_types[prod] = new_type
-
-# 更新持仓结构：确保每个母基金有一个持仓字典
-for prod, ptype in st.session_state.product_types.items():
-    if ptype == "母基金" and prod not in st.session_state.holdings:
-        st.session_state.holdings[prod] = {}
-    elif ptype == "子基金" and prod in st.session_state.holdings:
-        # 如果某产品从母基金改为子基金，清除其持仓记录（可选）
-        st.session_state.holdings.pop(prod, None)
-
-
-# ---------- 3. 辅助函数：保存单个 sheet 的前5列到 Excel ----------
+# ---------- 3. 辅助函数：保存单个 sheet 到 Excel ----------
 def save_sheet_to_excel(sheet_name, df_updated, wb_path):
     wb = load_workbook(wb_path)
     ws = wb[sheet_name]
-    # 清空前5列所有行（从第1行开始）
+    # 清空前6列所有行（从第1行开始）
     for row in range(1, ws.max_row + 1):
-        for col in range(1, 6):
+        for col in range(1, 7):  # 改为7列
             ws.cell(row=row, column=col, value=None)
     # 写入新数据（包含表头）
     for r_idx, row in enumerate(dataframe_to_rows(df_updated, index=False, header=True), 1):
-        for c_idx, value in enumerate(row[:5], 1):
+        for c_idx, value in enumerate(row[:6], 1):  # 改为6列
             ws.cell(row=r_idx, column=c_idx, value=value)
     wb.save(wb_path)
 
 
-def add_cashflow_record(product_name, date_val, flow_type, inflow, outflow, balance_after):
+def add_cashflow_record(product_name, date_val, flow_type, related_product, inflow, outflow, balance_after):
     """向指定产品的现金流表追加一行，并返回新的 DataFrame"""
     df = sheets_data[product_name].copy()
     new_row = pd.DataFrame({
         "日期": [date_val],
         "现金流类型": [flow_type],
+        "关联产品": [related_product],
         "现金流入": [inflow],
         "现金流出": [outflow],
         "期末余额": [balance_after]
@@ -121,200 +297,203 @@ def add_cashflow_record(product_name, date_val, flow_type, inflow, outflow, bala
     return df
 
 
-# ---------- 4. 主界面：产品选择与展示 ----------
+# ---------- 4. 主界面：多产品选择与展示 ----------
 st.header("📋 产品现金流明细（可编辑）")
-selected_product = st.selectbox("选择产品", all_products, key="product_select")
-if selected_product:
-    product_type = st.session_state.product_types[selected_product]
-    st.caption(f"当前类型：**{product_type}**")
 
-    df = sheets_data[selected_product].copy()
-    # 填充NaN
-    df["现金流入"] = df["现金流入"].fillna(0).astype(float)
-    df["现金流出"] = df["现金流出"].fillna(0).astype(float)
-    df["期末余额"] = df["期末余额"].fillna(0).astype(float)
+# 多产品选择器 - 更紧凑的布局
+st.markdown("**选择要查看的产品（最多3个）**")
+col_select1, col_select2, col_select3 = st.columns(3)
 
-    edited_df = st.data_editor(
-        df,
-        use_container_width=True,
-        num_rows="dynamic",
-        column_config={
-            "日期": st.column_config.DateColumn("日期", format="YYYY-MM-DD"),
-            "现金流类型": st.column_config.TextColumn("现金流类型"),
-            "现金流入": st.column_config.NumberColumn("现金流入 (元)", step=1000),
-            "现金流出": st.column_config.NumberColumn("现金流出 (元)", step=1000),
-            "期末余额": st.column_config.NumberColumn("期末余额 (元)", step=1000),
-        }
-    )
+with col_select1:
+    selected_product1 = st.selectbox("产品 1", [""] + all_products, key="product_select_1", label_visibility="collapsed")
+with col_select2:
+    selected_product2 = st.selectbox("产品 2", [""] + all_products, key="product_select_2", label_visibility="collapsed")
+with col_select3:
+    selected_product3 = st.selectbox("产品 3", [""] + all_products, key="product_select_3", label_visibility="collapsed")
 
-    # 保存当前产品修改
-    if st.button(f"保存「{selected_product}」的修改"):
-        try:
-            if uploaded_file is not None:
-                with open("temp_workbook.xlsx", "wb") as f:
-                    f.write(uploaded_file.getbuffer())
-                wb_path = "temp_workbook.xlsx"
-            else:
-                wb_path = DEFAULT_FILE
-            save_sheet_to_excel(selected_product, edited_df, wb_path)
-            sheets_data[selected_product] = edited_df
-            st.success("保存成功！")
-            st.cache_data.clear()
-        except Exception as e:
-            st.error(f"保存失败：{e}")
+# 收集已选择的产品
+selected_products = [p for p in [selected_product1, selected_product2, selected_product3] if p]
 
-# ---------- 5. 母子基金联动操作（母基金持仓管理） ----------
-st.header("🔄 母子基金申购/赎回联动")
-# 筛选出母基金列表
-mother_funds = [p for p, t in st.session_state.product_types.items() if t == "母基金"]
-if not mother_funds:
-    st.info("尚未配置母基金产品，请在侧边栏将至少一个产品设为「母基金」")
+if not selected_products:
+    st.info("👈 请从上方下拉框中选择要查看的产品")
 else:
-    selected_mother = st.selectbox("选择母基金", mother_funds, key="mother_select")
-    if selected_mother:
-        # 可投资的子基金列表（所有子基金产品）
-        children = [p for p, t in st.session_state.product_types.items() if t == "子基金"]
-        if not children:
-            st.warning("没有子基金产品可供申购")
+    # 检查是否点击了某个产品进入参数页面
+    if st.session_state.get('viewing_product_params', None):
+        viewing_product = st.session_state['viewing_product_params']
+        
+        # 显示产品参数页面
+        st.markdown(f"# 📋 {viewing_product} - 产品参数")
+        
+        # 返回按钮
+        if st.button("⬅️ 返回现金流管理", type="primary"):
+            st.session_state['viewing_product_params'] = None
+            st.rerun()
+        
+        st.markdown("---")
+        
+        # 加载产品要素表
+        df_elements = load_product_elements()
+        
+        # 使用简称映射查找产品
+        product_row = None
+        
+        if not df_elements.empty:
+            # 查找简称列
+            alias_col = None
+            for col_name in ["简称", "产品简称", "缩写", "产品缩写"]:
+                if col_name in df_elements.columns:
+                    alias_col = col_name
+                    break
+            
+            # 1. 首先尝试精确匹配产品名称
+            if viewing_product in df_elements["产品名称"].values:
+                product_row = df_elements[df_elements["产品名称"] == viewing_product].index[0]
+            # 2. 如果有简称列，尝试通过简称匹配
+            elif alias_col and viewing_product in df_elements[alias_col].values:
+                product_row = df_elements[df_elements[alias_col] == viewing_product].index[0]
+            # 3. 尝试通过映射查找全称
+            elif name_mapping and viewing_product in name_mapping:
+                full_name = name_mapping[viewing_product]
+                if full_name in df_elements["产品名称"].values:
+                    product_row = df_elements[df_elements["产品名称"] == full_name].index[0]
+        
+        if product_row is not None:
+            product_info = df_elements.loc[product_row]
+            
+            # 显示并编辑产品参数
+            col_p1, col_p2 = st.columns(2)
+            with col_p1:
+                new_channel = st.text_input("申赎渠道", value=str(product_info.get("申赎渠道", "")), key=f"edit_channel_{viewing_product}")
+                new_purchase_days = st.number_input("申购到账时间(T+N)", min_value=0, max_value=30, 
+                                                    value=int(product_info.get("申购到账时间(T+N)", 0)), key=f"edit_purchase_{viewing_product}")
+            with col_p2:
+                new_redeem_days = st.number_input("赎回到账时间(T+N)", min_value=0, max_value=30,
+                                                  value=int(product_info.get("赎回到账时间(T+N)", 0)), key=f"edit_redeem_{viewing_product}")
+                new_notes = st.text_input("备注", value=str(product_info.get("备注", "")), key=f"edit_notes_{viewing_product}")
+            
+            col_save1, col_save2 = st.columns([1, 3])
+            with col_save1:
+                if st.button("💾 保存参数", type="primary", key=f"save_product_params_{viewing_product}"):
+                    # 更新数据
+                    df_elements.loc[product_row, "申赎渠道"] = new_channel
+                    df_elements.loc[product_row, "申购到账时间(T+N)"] = new_purchase_days
+                    df_elements.loc[product_row, "赎回到账时间(T+N)"] = new_redeem_days
+                    df_elements.loc[product_row, "备注"] = new_notes
+                    
+                    if save_product_elements(df_elements):
+                        st.success("✅ 产品参数保存成功！")
+                        st.rerun()
+            with col_save2:
+                if st.button("🔄 取消编辑", key=f"cancel_edit_{viewing_product}"):
+                    st.session_state['viewing_product_params'] = None
+                    st.rerun()
         else:
-            # 展示当前母基金的持仓（持有的子基金份额）
-            holdings = st.session_state.holdings.get(selected_mother, {})
-            st.subheader(f"📦 {selected_mother} 当前持仓（子基金）")
-            if holdings:
-                holdings_df = pd.DataFrame([
-                    {"子基金": name, "持有份额 (万元)": amt / 10000} for name, amt in holdings.items()
-                ])
-                st.dataframe(holdings_df, use_container_width=True)
-            else:
-                st.write("暂无持仓")
-
-            # 申购/赎回操作
-            st.subheader("申购/赎回子基金")
-            target_child = st.selectbox("选择子基金", children, key="child_select")
-            # 获取子基金当前净值（简化：净值固定为1，也可以让用户输入）
-            nav = st.number_input(f"{target_child} 单位净值 (元)", min_value=0.0, value=1.0, step=0.01, key="nav")
-            # 交易类型
-            action = st.radio("操作类型", ["申购", "赎回"], horizontal=True)
-            # 金额或份额
-            if action == "申购":
-                amount = st.number_input("申购金额 (万元)", min_value=0.0, step=1.0, key="sub_amount")
-                if st.button("执行申购"):
-                    if amount <= 0:
-                        st.error("金额必须大于0")
-                    else:
-                        amount_yuan = amount * 10000
-                        # 获取母基金当前余额（最后一条记录的期末余额）
-                        mother_df = sheets_data[selected_mother]
-                        mother_balance = mother_df["期末余额"].iloc[-1] if not mother_df.empty else 0
-                        if mother_balance < amount_yuan:
-                            st.error(f"母基金余额不足（当前余额 {mother_balance:,.0f} 元）")
-                        else:
-                            # 计算申购份额 = 金额 / 净值
-                            shares = amount_yuan / nav
-                            # 1. 母基金：现金流出
-                            new_mother_balance = mother_balance - amount_yuan
-                            add_cashflow_record(
-                                selected_mother,
-                                date.today(),
-                                f"申购子基金 {target_child}",
-                                0, amount_yuan, new_mother_balance
+            st.info(f"⚠️ 未找到「{viewing_product}」的参数信息，请在产品要素表中添加")
+            
+            # 提供快速添加功能
+            col_add1, col_add2 = st.columns(2)
+            with col_add1:
+                add_channel = st.text_input("申赎渠道", placeholder="如：直销、代销", key=f"add_channel_{viewing_product}")
+                add_purchase_days = st.number_input("申购到账时间(T+N)", min_value=0, max_value=30, value=0, key=f"add_purchase_{viewing_product}")
+            with col_add2:
+                add_redeem_days = st.number_input("赎回到账时间(T+N)", min_value=0, max_value=30, value=0, key=f"add_redeem_{viewing_product}")
+                add_notes = st.text_input("备注", key=f"add_notes_{viewing_product}")
+            
+            if st.button("➕ 添加产品参数", type="primary", key=f"add_product_params_{viewing_product}"):
+                new_row = pd.DataFrame({
+                    "产品名称": [viewing_product],
+                    "申赎渠道": [add_channel],
+                    "申购到账时间(T+N)": [add_purchase_days],
+                    "赎回到账时间(T+N)": [add_redeem_days],
+                    "备注": [add_notes]
+                })
+                df_elements = pd.concat([df_elements, new_row], ignore_index=True)
+                if save_product_elements(df_elements):
+                    st.success("✅ 产品参数添加成功！")
+                    st.rerun()
+    
+    else:
+        # 创建三列布局，并排显示选中的产品
+        product_columns = st.columns(len(selected_products))
+        
+        # 为每个选中的产品显示数据
+        for idx, selected_product in enumerate(selected_products):
+            with product_columns[idx]:
+                # 显示产品类型和可点击的产品名称
+                product_type = st.session_state.product_types[selected_product]
+                
+                # 使用链接样式的按钮作为产品名称
+                if st.button(f"{idx + 1}. {selected_product}", key=f"product_link_{selected_product}", use_container_width=True):
+                    st.session_state['viewing_product_params'] = selected_product
+                    st.rerun()
+                
+                st.caption(f"类型：**{product_type}** | 💡 点击名称查看参数")
+                
+                # 显示现金流数据
+                df = sheets_data[selected_product].copy()
+                
+                # 过滤：只显示今天往前推5天开始的数据
+                from datetime import timedelta
+                cutoff_date = pd.Timestamp.today() - timedelta(days=5)
+                df = df[df["日期"] >= cutoff_date].copy()
+                
+                # 重置索引，避免显示原始行号
+                df = df.reset_index(drop=True)
+                
+                # 填充NaN
+                df["现金流入"] = df["现金流入"].fillna(0).astype(float)
+                df["现金流出"] = df["现金流出"].fillna(0).astype(float)
+                df["期末余额"] = df["期末余额"].fillna(0).astype(float)
+                
+                # 将关联产品列的全称转换为简称（用于显示）
+                if reverse_mapping:
+                    df["关联产品"] = df["关联产品"].apply(
+                        lambda x: reverse_mapping.get(str(x).strip(), x) if str(x).strip() else ""
+                    )
+                
+                # 创建简称列表用于下拉选择
+                display_options = [""]  # 空选项
+                for product in all_products:
+                    # 如果有简称显示简称，否则显示全称
+                    display_name = reverse_mapping.get(product, product)
+                    display_options.append(display_name)
+                
+                edited_df = st.data_editor(
+                    df,
+                    use_container_width=True,
+                    num_rows="dynamic",
+                    hide_index=True,  # 隐藏索引列（序号列）
+                    column_config={
+                        "日期": st.column_config.DateColumn("日期", format="YYYY-MM-DD"),
+                        "现金流类型": st.column_config.TextColumn("类型"),
+                        "关联产品": st.column_config.SelectboxColumn(
+                            "关联产品",
+                            options=display_options,  # 使用简称列表
+                            required=False
+                        ),
+                        "现金流入": st.column_config.NumberColumn("流入", step=1000),
+                        "现金流出": st.column_config.NumberColumn("流出", step=1000),
+                        "期末余额": st.column_config.NumberColumn("余额", step=1000),
+                    },
+                    key=f"editor_{selected_product}"
+                )
+                
+                # 保存当前产品修改
+                if st.button(f"💾 保存", type="primary", key=f"save_{selected_product}", use_container_width=True):
+                    try:
+                        # 将简称转换回全称（用于保存到Excel）
+                        if name_mapping:
+                            edited_df["关联产品"] = edited_df["关联产品"].apply(
+                                lambda x: name_mapping.get(str(x).strip(), x) if str(x).strip() else ""
                             )
-                            # 2. 子基金：现金流入，并增加期末余额
-                            child_df = sheets_data[target_child]
-                            child_balance = child_df["期末余额"].iloc[-1] if not child_df.empty else 0
-                            new_child_balance = child_balance + amount_yuan
-                            add_cashflow_record(
-                                target_child,
-                                date.today(),
-                                f"被母基金 {selected_mother} 申购",
-                                amount_yuan, 0, new_child_balance
-                            )
-                            # 3. 更新母基金持仓
-                            current_hold = st.session_state.holdings.get(selected_mother, {})
-                            current_hold[target_child] = current_hold.get(target_child, 0) + shares
-                            st.session_state.holdings[selected_mother] = current_hold
-                            # 刷新缓存
-                            st.cache_data.clear()
-                            st.success(
-                                f"申购成功！母基金流出 {amount_yuan:,.0f} 元，子基金流入 {amount_yuan:,.0f} 元，持有份额增加 {shares:,.2f}")
-                            st.rerun()
-            else:  # 赎回
-                # 赎回需要基于持仓份额
-                current_shares = holdings.get(target_child, 0)
-                if current_shares == 0:
-                    st.warning(f"母基金未持有 {target_child}，无法赎回")
-                else:
-                    # 可以赎回全部或部分，按份额计算赎回金额
-                    shares_to_redeem = st.number_input("赎回份额 (份)", min_value=0.0, max_value=float(current_shares),
-                                                       step=1000.0, key="redeem_shares")
-                    if st.button("执行赎回"):
-                        if shares_to_redeem <= 0:
-                            st.error("份额必须大于0")
-                        else:
-                            redeem_amount = shares_to_redeem * nav
-                            # 1. 母基金：现金流入
-                            mother_df = sheets_data[selected_mother]
-                            mother_balance = mother_df["期末余额"].iloc[-1] if not mother_df.empty else 0
-                            new_mother_balance = mother_balance + redeem_amount
-                            add_cashflow_record(
-                                selected_mother,
-                                date.today(),
-                                f"赎回子基金 {target_child}",
-                                redeem_amount, 0, new_mother_balance
-                            )
-                            # 2. 子基金：现金流出
-                            child_df = sheets_data[target_child]
-                            child_balance = child_df["期末余额"].iloc[-1] if not child_df.empty else 0
-                            new_child_balance = child_balance - redeem_amount
-                            add_cashflow_record(
-                                target_child,
-                                date.today(),
-                                f"被母基金 {selected_mother} 赎回",
-                                0, redeem_amount, new_child_balance
-                            )
-                            # 3. 更新持仓
-                            current_hold = st.session_state.holdings.get(selected_mother, {})
-                            current_hold[target_child] -= shares_to_redeem
-                            if current_hold[target_child] <= 0:
-                                del current_hold[target_child]
-                            st.session_state.holdings[selected_mother] = current_hold
-                            st.cache_data.clear()
-                            st.success(
-                                f"赎回成功！母基金流入 {redeem_amount:,.0f} 元，子基金流出 {redeem_amount:,.0f} 元")
-                            st.rerun()
+                        
+                        wb_path = DEFAULT_FILE
+                        save_sheet_to_excel(selected_product, edited_df, wb_path)
+                        sheets_data[selected_product] = edited_df
+                        st.success("✅ 保存成功！")
+                        st.cache_data.clear()
+                    except Exception as e:
+                        st.error(f"❌ 保存失败：{e}")
 
-# ---------- 6. 全局仪表盘：所有产品最新余额及趋势 ----------
-st.header("📊 流动性仪表盘")
-if all_products:
-    latest_data = []
-    for prod in all_products:
-        df = sheets_data[prod]
-        if not df.empty:
-            latest_balance = df["期末余额"].iloc[-1]
-            if pd.notna(latest_balance):
-                latest_data.append({"产品": prod, "最新余额 (万元)": latest_balance / 10000})
-    if latest_data:
-        latest_df = pd.DataFrame(latest_data)
-        col1, col2 = st.columns(2)
-        with col1:
-            st.metric("平均余额 (万元)", f"{latest_df['最新余额 (万元)'].mean():.2f}")
-        with col2:
-            st.metric("总余额 (万元)", f"{latest_df['最新余额 (万元)'].sum():.2f}")
-        st.bar_chart(latest_df.set_index("产品"))
-
-    # 趋势图（前5个产品）
-    st.subheader("余额趋势（前5个产品）")
-    plot_products = all_products[:5]
-    trend_dfs = []
-    for prod in plot_products:
-        df = sheets_data[prod]
-        if not df.empty:
-            trend = df[["日期", "期末余额"]].copy()
-            trend["产品"] = prod
-            trend_dfs.append(trend)
-    if trend_dfs:
-        trend_all = pd.concat(trend_dfs, ignore_index=True)
-        fig = px.line(trend_all, x="日期", y="期末余额", color="产品", title="产品期末余额趋势")
-        st.plotly_chart(fig, use_container_width=True)
-
-st.caption("提示：所有现金流修改都会自动保存到 Excel 的前5列。母子基金申购/赎回会生成新的交易记录并更新双方余额。")
+st.markdown("---")
+st.caption("💡 提示：可以同时选择最多3个产品进行对比查看，点击「查看/修改产品参数」按钮可以查看和编辑产品参数")

@@ -8,6 +8,7 @@ from page_core_metrics import render_core_metrics
 from page_product_analysis import render_product_analysis
 from page_asset_analysis import render_asset_analysis
 from page_trade_records import render_trade_records
+from page_product_elements import render_product_elements
 
 
 # ----------------------
@@ -128,6 +129,7 @@ with st.sidebar:
             "产品分析",
             "资产分析",
             "交易记录",
+            "产品参数",
         ],
         label_visibility="collapsed"
     )
@@ -183,6 +185,12 @@ elif menu == "资产分析":
 # ----------------------
 elif menu == "交易记录":
     render_trade_records(trades_filtered)
+
+# ----------------------
+# 产品参数页面
+# ----------------------
+elif menu == "产品参数":
+    render_product_elements()
 
 
 # ----------------------
