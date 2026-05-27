@@ -232,6 +232,9 @@ def render_liquidity_management():
         # 格式化显示
         df_display = df_liquidity.copy()
         
+        # 按日期排序
+        df_display = df_display.sort_values(by="日期", ascending=True).reset_index(drop=True)
+        
         # 使用data_editor显示（可编辑）
         edited_df = st.data_editor(
             df_display,

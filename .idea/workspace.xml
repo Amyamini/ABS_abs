@@ -5,14 +5,15 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="5ff0f29b-8fc7-457d-b533-9a6fbb6898af" name="Changes" comment="">
+      <change afterPath="$PROJECT_DIR$/AI_auto_debug.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/添加.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/YKABS.iml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/YKABS.iml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/README.md" beforeDir="false" afterPath="$PROJECT_DIR$/README.md" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app.py" beforeDir="false" afterPath="$PROJECT_DIR$/app.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/output.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/page_liquidity_management.py" beforeDir="false" afterPath="$PROJECT_DIR$/page_liquidity_management.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/page_product_liquidity.py" beforeDir="false" afterPath="$PROJECT_DIR$/page_product_liquidity.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/test.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/requirements.txt" beforeDir="false" afterPath="$PROJECT_DIR$/requirements.txt" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/产品要素表.xlsx" beforeDir="false" afterPath="$PROJECT_DIR$/产品要素表.xlsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/基金流动性管理总表.xlsx" beforeDir="false" afterPath="$PROJECT_DIR$/基金流动性管理总表.xlsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/基金流动性管理总表.xlsx" beforeDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -29,6 +30,26 @@
   <component name="Git.Settings">
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
   </component>
+  <component name="GitHubPullRequestSearchHistory">{
+  &quot;history&quot;: [
+    {
+      &quot;searchQuery&quot;: &quot;介绍自己&quot;,
+      &quot;state&quot;: &quot;OPEN&quot;,
+      &quot;assignee&quot;: &quot;Amyamini&quot;
+    }
+  ],
+  &quot;lastFilter&quot;: {
+    &quot;searchQuery&quot;: &quot;介绍自己&quot;,
+    &quot;state&quot;: &quot;OPEN&quot;,
+    &quot;assignee&quot;: &quot;Amyamini&quot;
+  }
+}</component>
+  <component name="GithubPullRequestsUISettings">{
+  &quot;selectedUrlAndAccountId&quot;: {
+    &quot;url&quot;: &quot;https://github.com/Amyamini/ABS_abs.git&quot;,
+    &quot;accountId&quot;: &quot;af913855-73a2-4cee-8548-a1d38ad381d5&quot;
+  }
+}</component>
   <component name="McpProjectServerCommands">
     <commands />
     <urls />
@@ -44,42 +65,44 @@
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent"><![CDATA[{
-  "keyToString": {
-    "ModuleVcsDetector.initialDetectionPerformed": "true",
-    "Python tests.Python tests for output.TestFundPortfolio.test_add_product.executor": "Run",
-    "Python tests.Python tests in output.py.executor": "Run",
-    "Python.app.executor": "Run",
-    "Python.create_sample_elements.executor": "Run",
-    "Python.financial_analysis_web.executor": "Run",
-    "Python.main.executor": "Run",
-    "Python.page_liquidity_management.executor": "Run",
-    "Python.page_product_elements.executor": "Run",
-    "Python.page_product_liquidity (1).executor": "Run",
-    "Python.page_product_liquidity.executor": "Run",
-    "Python.test.executor": "Run",
-    "Python.待办.executor": "Run",
-    "Python.拖拉拽生成网页.executor": "Run",
-    "Python.数据分析页面展示.executor": "Run",
-    "Python.网页.executor": "Run",
-    "RunOnceActivity.MCP Project settings loaded": "true",
-    "RunOnceActivity.ShowReadmeOnStart": "true",
-    "RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252": "true",
-    "RunOnceActivity.git.unshallow": "true",
-    "RunOnceActivity.typescript.service.memoryLimit.init": "true",
-    "git-widget-placeholder": "main",
-    "ignore.virus.scanning.warn.message": "true",
-    "settings.editor.selected.configurable": "preferences.pluginManager",
-    "vue.rearranger.settings.migration": "true"
+  <component name="PropertiesComponent">{
+  &quot;keyToString&quot;: {
+    &quot;ModuleVcsDetector.initialDetectionPerformed&quot;: &quot;true&quot;,
+    &quot;Python tests.Python tests for output.TestFundPortfolio.test_add_product.executor&quot;: &quot;Run&quot;,
+    &quot;Python tests.Python tests in output.py.executor&quot;: &quot;Run&quot;,
+    &quot;Python.AI_auto_debug.executor&quot;: &quot;Run&quot;,
+    &quot;Python.app.executor&quot;: &quot;Run&quot;,
+    &quot;Python.create_sample_elements.executor&quot;: &quot;Run&quot;,
+    &quot;Python.financial_analysis_web.executor&quot;: &quot;Run&quot;,
+    &quot;Python.main.executor&quot;: &quot;Run&quot;,
+    &quot;Python.page_liquidity_management.executor&quot;: &quot;Run&quot;,
+    &quot;Python.page_product_elements.executor&quot;: &quot;Run&quot;,
+    &quot;Python.page_product_liquidity (1).executor&quot;: &quot;Run&quot;,
+    &quot;Python.page_product_liquidity.executor&quot;: &quot;Run&quot;,
+    &quot;Python.test.executor&quot;: &quot;Run&quot;,
+    &quot;Python.待办.executor&quot;: &quot;Run&quot;,
+    &quot;Python.拖拉拽生成网页.executor&quot;: &quot;Run&quot;,
+    &quot;Python.数据分析页面展示.executor&quot;: &quot;Run&quot;,
+    &quot;Python.添加.executor&quot;: &quot;Run&quot;,
+    &quot;Python.网页.executor&quot;: &quot;Run&quot;,
+    &quot;RunOnceActivity.MCP Project settings loaded&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.git.unshallow&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.typescript.service.memoryLimit.init&quot;: &quot;true&quot;,
+    &quot;git-widget-placeholder&quot;: &quot;main&quot;,
+    &quot;ignore.virus.scanning.warn.message&quot;: &quot;true&quot;,
+    &quot;settings.editor.selected.configurable&quot;: &quot;preferences.pluginManager&quot;,
+    &quot;vue.rearranger.settings.migration&quot;: &quot;true&quot;
   }
-}]]></component>
+}</component>
   <component name="RecentsManager">
     <key name="MoveFile.RECENT_KEYS">
       <recent name="D:\Users\zhong\PyCharm\YKABS\" />
     </key>
   </component>
-  <component name="RunManager" selected="Python.page_liquidity_management">
-    <configuration name="数据分析页面展示" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
+  <component name="RunManager" selected="Python.AI_auto_debug">
+    <configuration name="添加" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
       <module name="YKABS" />
       <option name="ENV_FILES" value="" />
       <option name="INTERPRETER_OPTIONS" value="" />
@@ -93,7 +116,30 @@
       <option name="ADD_CONTENT_ROOTS" value="true" />
       <option name="ADD_SOURCE_ROOTS" value="true" />
       <option name="RUN_TOOL" value="" />
-      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/数据分析页面展示.py" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/添加.py" />
+      <option name="PARAMETERS" value="" />
+      <option name="SHOW_COMMAND_LINE" value="false" />
+      <option name="EMULATE_TERMINAL" value="false" />
+      <option name="MODULE_MODE" value="false" />
+      <option name="REDIRECT_INPUT" value="false" />
+      <option name="INPUT_FILE" value="" />
+      <method v="2" />
+    </configuration>
+    <configuration name="AI_auto_debug" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
+      <module name="YKABS" />
+      <option name="ENV_FILES" value="" />
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <envs>
+        <env name="PYTHONUNBUFFERED" value="1" />
+      </envs>
+      <option name="SDK_HOME" value="" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$" />
+      <option name="IS_MODULE_SDK" value="true" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <option name="RUN_TOOL" value="" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/AI_auto_debug.py" />
       <option name="PARAMETERS" value="" />
       <option name="SHOW_COMMAND_LINE" value="false" />
       <option name="EMULATE_TERMINAL" value="false" />
@@ -195,45 +241,13 @@
       <option name="INPUT_FILE" value="" />
       <method v="2" />
     </configuration>
-    <configuration name="Python tests for output.TestFundPortfolio.test_add_product" type="tests" factoryName="Autodetect" temporary="true" nameIsGenerated="true">
-      <module name="YKABS" />
-      <option name="ENV_FILES" value="" />
-      <option name="INTERPRETER_OPTIONS" value="" />
-      <option name="PARENT_ENVS" value="true" />
-      <option name="SDK_HOME" value="" />
-      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$" />
-      <option name="IS_MODULE_SDK" value="true" />
-      <option name="ADD_CONTENT_ROOTS" value="true" />
-      <option name="ADD_SOURCE_ROOTS" value="true" />
-      <option name="RUN_TOOL" value="" />
-      <option name="_new_additionalArguments" value="&quot;&quot;" />
-      <option name="_new_target" value="&quot;output.TestFundPortfolio.test_add_product&quot;" />
-      <option name="_new_targetType" value="&quot;PYTHON&quot;" />
-      <method v="2" />
-    </configuration>
-    <configuration name="Python tests in output.py" type="tests" factoryName="Autodetect" temporary="true" nameIsGenerated="true">
-      <module name="YKABS" />
-      <option name="ENV_FILES" value="" />
-      <option name="INTERPRETER_OPTIONS" value="" />
-      <option name="PARENT_ENVS" value="true" />
-      <option name="SDK_HOME" value="" />
-      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$" />
-      <option name="IS_MODULE_SDK" value="true" />
-      <option name="ADD_CONTENT_ROOTS" value="true" />
-      <option name="ADD_SOURCE_ROOTS" value="true" />
-      <option name="RUN_TOOL" value="" />
-      <option name="_new_additionalArguments" value="&quot;&quot;" />
-      <option name="_new_target" value="&quot;$PROJECT_DIR$/output.py&quot;" />
-      <option name="_new_targetType" value="&quot;PATH&quot;" />
-      <method v="2" />
-    </configuration>
     <recent_temporary>
       <list>
+        <item itemvalue="Python.AI_auto_debug" />
+        <item itemvalue="Python.添加" />
+        <item itemvalue="Python.page_product_liquidity (1)" />
         <item itemvalue="Python.page_liquidity_management" />
         <item itemvalue="Python.test" />
-        <item itemvalue="Python tests.Python tests in output.py" />
-        <item itemvalue="Python tests.Python tests for output.TestFundPortfolio.test_add_product" />
-        <item itemvalue="Python.page_product_liquidity (1)" />
       </list>
     </recent_temporary>
   </component>
