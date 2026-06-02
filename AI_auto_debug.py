@@ -245,7 +245,7 @@ st.markdown("""
 
     /* 优化表格字体大小 */
     div[data-testid="stDataframe"] {
-        font-size: 0.85rem;
+        font-size: 0.6rem;
     }
 </style>
 """, unsafe_allow_html=True)

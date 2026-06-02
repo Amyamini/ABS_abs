@@ -5,15 +5,11 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="5ff0f29b-8fc7-457d-b533-9a6fbb6898af" name="Changes" comment="">
-      <change afterPath="$PROJECT_DIR$/AI_auto_debug.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/添加.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.claude/settings.local.json" beforeDir="false" afterPath="$PROJECT_DIR$/.claude/settings.local.json" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/YKABS.iml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/YKABS.iml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/page_liquidity_management.py" beforeDir="false" afterPath="$PROJECT_DIR$/page_liquidity_management.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/page_product_liquidity.py" beforeDir="false" afterPath="$PROJECT_DIR$/page_product_liquidity.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/AI_auto_debug.py" beforeDir="false" afterPath="$PROJECT_DIR$/AI_auto_debug.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/requirements.txt" beforeDir="false" afterPath="$PROJECT_DIR$/requirements.txt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/产品要素表.xlsx" beforeDir="false" afterPath="$PROJECT_DIR$/产品要素表.xlsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/基金流动性管理总表.xlsx" beforeDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
